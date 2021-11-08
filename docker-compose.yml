@@ -48,11 +48,28 @@ services:
       - OPEN_SEMANTIC_ETL_SPACY_SERVER=http://spacy:8080
       #- OPEN_SEMANTIC_ETL_NEO4J_HOST=http://neo4j:7474
       - OMP_THREAD_LIMIT=1
-    ports:
-      - "5555:5555"
     volumes:
       # write access to persistant thumbnails dir
       - data_media:/var/opensemanticsearch/media
+      - type: bind
+        source: /opt/osems/files
+        target: /opt/osems/files
+
+  flower:
+    image: opensemanticsearch/flower
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+      target: osems_flower
+    working_dir: /data
+    ports:
+      - "5555:5555"
+    depends_on:
+      - rabbitmq
+      - etl
+    environment:
+      - CELERY_BROKER_URL=amqp://rabbitmq
+      - CELERY_RESULT_BACKEND=amqp://rabbitmq
 
   solr:
     image: opensemanticsearch/solr
